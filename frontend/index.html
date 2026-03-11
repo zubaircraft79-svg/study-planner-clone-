@@ -1,16 +1,44 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#3B82F6" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#4f6df5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>StudyFlow - Smart Study Planner</title>
-    <meta name="description" content="Achieve more with intelligent study planning. Track progress, manage subjects, and optimize your learning schedule." />
+    <meta name="description" content="Achieve more with intelligent study planning. Track progress, manage subjects, and optimize your learning schedule with beautiful analytics." />
+    <meta name="keywords" content="study planner, student app, learning tracker, exam preparation, study schedule" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="StudyFlow - Smart Study Planner" />
+    <meta property="og:description" content="Achieve more with intelligent study planning." />
+    <meta property="og:type" content="website" />
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    
+    <!-- Prevent FOUC -->
+    <script>
+      try {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+    
+    <style>
+      /* Critical CSS for initial load */
+      html { background-color: #f8fafc; }
+      html.dark { background-color: #0f172a; }
+      #root { min-height: 100vh; }
+    </style>
   </head>
-  <body>
+  <body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
