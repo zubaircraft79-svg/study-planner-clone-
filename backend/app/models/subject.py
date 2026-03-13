@@ -8,6 +8,7 @@ from app.db.base import Base
 
 class Subject(Base):
     __tablename__ = "subjects"
+    __table_args__ = {"sqlite_autoincrement": True}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[str] = mapped_column(String(128), index=True)

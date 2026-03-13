@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import func
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 
 from app.models import StudyBlock, StudySession, Subject
@@ -9,10 +9,22 @@ from app.schemas.progress import SubjectProgressOut
 
 
 def build_subject_progress(db: Session, user_id: str) -> list[SubjectProgressOut]:
-    subjects = db.query(Subject).filter(Subject.user_id == user_id).order_by(Subject.exam_date.asc().nullslast(), Subject.name.asc()).all()
+    subjects = (
+        db.query(Subject)
+        .filter(Subject.user_id == user_id)
+        .order_by(Subject.exam_date.asc().nullslast(), Subject.name.asc())
+        .all()
+    )
+    if not subjects:
+        return []
+
     completed_rows = (
         db.query(StudySession.subject_id, func.sum(StudySession.actual_minutes))
-        .filter(StudySession.user_id == user_id)
+        .join(Subject, and_(Subject.id == StudySession.subject_id, Subject.user_id == user_id))
+        .filter(
+            StudySession.user_id == user_id,
+            StudySession.created_at >= Subject.created_at,
+        )
         .group_by(StudySession.subject_id)
         .all()
     )
@@ -23,6 +35,7 @@ def build_subject_progress(db: Session, user_id: str) -> list[SubjectProgressOut
         completed = completed_map.get(subject.id, 0)
         remaining = max(subject.required_minutes - completed, 0)
         progress = 0.0 if subject.required_minutes <= 0 else round((completed / subject.required_minutes) * 100, 1)
+
         results.append(
             SubjectProgressOut(
                 subject_id=subject.id,
@@ -35,17 +48,44 @@ def build_subject_progress(db: Session, user_id: str) -> list[SubjectProgressOut
                 exam_date=subject.exam_date,
             )
         )
+
     return results
 
 
 def build_dashboard_summary(db: Session, user_id: str, start: date, end: date) -> DashboardSummary:
     subjects = db.query(Subject).filter(Subject.user_id == user_id).all()
+    if not subjects:
+        return DashboardSummary(
+            total_subjects=0,
+            total_planned_minutes=0,
+            total_completed_minutes=0,
+            upcoming_exams=0,
+            completion_rate=0.0,
+            next_exam_subject=None,
+            next_exam_date=None,
+        )
+
     blocks = (
         db.query(StudyBlock)
-        .filter(StudyBlock.user_id == user_id, StudyBlock.block_date >= start, StudyBlock.block_date <= end)
+        .join(Subject, and_(Subject.id == StudyBlock.subject_id, Subject.user_id == user_id))
+        .filter(
+            StudyBlock.user_id == user_id,
+            StudyBlock.created_at >= Subject.created_at,
+            StudyBlock.block_date >= start,
+            StudyBlock.block_date <= end,
+        )
         .all()
     )
-    sessions = db.query(StudySession).filter(StudySession.user_id == user_id).all()
+
+    sessions = (
+        db.query(StudySession)
+        .join(Subject, and_(Subject.id == StudySession.subject_id, Subject.user_id == user_id))
+        .filter(
+            StudySession.user_id == user_id,
+            StudySession.created_at >= Subject.created_at,
+        )
+        .all()
+    )
 
     total_planned = sum(int(block.minutes) for block in blocks)
     total_completed = sum(int(session.actual_minutes) for session in sessions)

@@ -14,6 +14,7 @@ class StudySessionCreate(BaseModel):
 class StudySessionOut(StudySessionCreate):
     id: int
     user_id: str
+    source_block_id: int | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

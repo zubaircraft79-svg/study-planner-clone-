@@ -142,10 +142,23 @@ export default function StudyPlannerPage() {
     }
   }
 
+  async function handleComplete(block) {
+    try {
+      await api.completeBlock(block.id);
+      await loadRangeData();
+      setMessage("Block completed and session logged.");
+      setError("");
+    } catch (err) {
+      setError(err.message);
+      setMessage("");
+    }
+  }
+
   const groupedPreview = useMemo(() => {
     if (!preview?.blocks) {
       return [];
     }
+
     const grouped = new Map();
     preview.blocks.forEach((block) => {
       if (!grouped.has(block.block_date)) {
@@ -153,6 +166,7 @@ export default function StudyPlannerPage() {
       }
       grouped.get(block.block_date).push(block);
     });
+
     return [...grouped.entries()];
   }, [preview]);
 
@@ -180,6 +194,7 @@ export default function StudyPlannerPage() {
               <input type="date" value={range.end_date} onChange={(event) => setRange({ ...range, end_date: event.target.value })} />
             </div>
           </div>
+
           <div className="actions" style={{ marginTop: 16 }}>
             <button className="btn btn-secondary" onClick={handlePreview}>Preview plan</button>
             <button className="btn btn-primary" onClick={handleGenerateAndSave}>Generate & save</button>
@@ -211,6 +226,7 @@ export default function StudyPlannerPage() {
                   <input type="number" min="0" max="23" value={preferences.day_start_hour} onChange={(event) => setPreferences({ ...preferences, day_start_hour: event.target.value })} />
                 </div>
               </div>
+
               <div className="actions">
                 <button className="btn btn-primary" type="submit">Save preferences</button>
               </div>
@@ -241,7 +257,9 @@ export default function StudyPlannerPage() {
                         value={row.minutes_available}
                         disabled={row.is_rest_day}
                         onChange={(event) => {
-                          const next = templates.map((item) => item.weekday === row.weekday ? { ...item, minutes_available: event.target.value } : item);
+                          const next = templates.map((item) =>
+                            item.weekday === row.weekday ? { ...item, minutes_available: event.target.value } : item
+                          );
                           setTemplates(next);
                         }}
                       />
@@ -252,7 +270,11 @@ export default function StudyPlannerPage() {
                         checked={row.is_rest_day}
                         onChange={(event) => {
                           const checked = event.target.checked;
-                          const next = templates.map((item) => item.weekday === row.weekday ? { ...item, is_rest_day: checked, minutes_available: checked ? 0 : item.minutes_available || 120 } : item);
+                          const next = templates.map((item) =>
+                            item.weekday === row.weekday
+                              ? { ...item, is_rest_day: checked, minutes_available: checked ? 0 : item.minutes_available || 120 }
+                              : item
+                          );
                           setTemplates(next);
                         }}
                       />
@@ -262,6 +284,7 @@ export default function StudyPlannerPage() {
               </tbody>
             </table>
           </div>
+
           <div className="actions">
             <button className="btn btn-primary" onClick={handleSaveTemplates}>Save weekly availability</button>
           </div>
@@ -274,6 +297,7 @@ export default function StudyPlannerPage() {
                 <label>Date</label>
                 <input type="date" value={overrideForm.override_date} onChange={(event) => setOverrideForm({ ...overrideForm, override_date: event.target.value })} />
               </div>
+
               <div className="field">
                 <label>Available minutes</label>
                 <input
@@ -284,6 +308,7 @@ export default function StudyPlannerPage() {
                   onChange={(event) => setOverrideForm({ ...overrideForm, minutes_available: event.target.value })}
                 />
               </div>
+
               <div className="field">
                 <label>Rest day</label>
                 <select value={String(overrideForm.is_rest_day)} onChange={(event) => setOverrideForm({ ...overrideForm, is_rest_day: event.target.value === "true" })}>
@@ -292,6 +317,7 @@ export default function StudyPlannerPage() {
                 </select>
               </div>
             </div>
+
             <div className="actions">
               <button className="btn btn-primary" type="submit">Save override</button>
             </div>
@@ -314,6 +340,7 @@ export default function StudyPlannerPage() {
       <div className="grid cols-2">
         <SectionCard title="Planner preview" subtitle="See generated blocks before saving them.">
           {!preview ? <p className="empty">No preview yet.</p> : null}
+
           {preview?.warnings?.length ? (
             <div className="grid">
               {preview.warnings.map((warning, index) => (
@@ -321,6 +348,7 @@ export default function StudyPlannerPage() {
               ))}
             </div>
           ) : null}
+
           <div className="list">
             {groupedPreview.map(([day, items]) => (
               <div key={day} className="card" style={{ padding: 16 }}>
@@ -342,7 +370,7 @@ export default function StudyPlannerPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Saved blocks" subtitle="Lock important blocks before regenerating.">
+        <SectionCard title="Saved blocks" subtitle="Lock important blocks, or complete them after studying.">
           <div className="list">
             {savedBlocks.length === 0 ? <p className="empty">No saved plan blocks in this range.</p> : null}
             {savedBlocks.map((block) => (
@@ -352,10 +380,28 @@ export default function StudyPlannerPage() {
                     <span className="dot" style={{ background: block.subject_color }} />
                     {block.subject_name}
                   </div>
-                  <div className="block-meta">{block.block_date} · {new Date(block.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - {new Date(block.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+                  <div className="block-meta">
+                    {block.block_date} · {new Date(block.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - {new Date(block.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
                   <div className="block-meta">{block.minutes} minutes · {block.block_type}</div>
+                  <div className="block-meta">Status: {block.status}</div>
                 </div>
-                <button className="btn btn-secondary" onClick={() => toggleLock(block)}>{block.locked ? "Unlock" : "Lock"}</button>
+
+                <div className="actions">
+                  <button className="btn btn-secondary" onClick={() => toggleLock(block)}>
+                    {block.locked ? "Unlock" : "Lock"}
+                  </button>
+
+                  {block.status === "planned" ? (
+                    <button className="btn btn-primary" onClick={() => handleComplete(block)}>
+                      Complete
+                    </button>
+                  ) : (
+                    <button className="btn btn-secondary" disabled>
+                      Completed
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

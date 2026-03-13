@@ -3,6 +3,22 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import SectionCard from "../components/SectionCard";
 
+const difficultyOptions = [
+  { value: 1, label: "Very Easy" },
+  { value: 2, label: "Easy" },
+  { value: 3, label: "Medium" },
+  { value: 4, label: "Hard" },
+  { value: 5, label: "Very Hard" },
+];
+
+const priorityOptions = [
+  { value: 1, label: "Low" },
+  { value: 2, label: "Medium" },
+  { value: 3, label: "High" },
+  { value: 4, label: "Very High" },
+  { value: 5, label: "Urgent" },
+];
+
 const defaultForm = {
   name: "",
   exam_date: "",
@@ -11,6 +27,10 @@ const defaultForm = {
   required_minutes: 600,
   color: "#4F46E5",
 };
+
+function labelFor(options, value) {
+  return options.find((item) => Number(item.value) === Number(value))?.label || `Level ${value}`;
+}
 
 export default function SubjectManagementPage() {
   const [subjects, setSubjects] = useState([]);
@@ -40,6 +60,7 @@ export default function SubjectManagementPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+
     const payload = {
       ...form,
       exam_date: form.exam_date || null,
@@ -58,6 +79,7 @@ export default function SubjectManagementPage() {
       }
       resetForm();
       await loadSubjects();
+      setError("");
     } catch (err) {
       setError(err.message);
       setMessage("");
@@ -108,30 +130,68 @@ export default function SubjectManagementPage() {
           <form className="grid" onSubmit={handleSubmit}>
             <div className="field">
               <label>Subject name</label>
-              <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="e.g. Data Structures" required />
+              <input
+                value={form.name}
+                onChange={(event) => setForm({ ...form, name: event.target.value })}
+                placeholder="e.g. Data Structures"
+                required
+              />
             </div>
+
             <div className="form-grid">
               <div className="field">
                 <label>Exam date</label>
-                <input type="date" value={form.exam_date} onChange={(event) => setForm({ ...form, exam_date: event.target.value })} />
+                <input
+                  type="date"
+                  value={form.exam_date}
+                  onChange={(event) => setForm({ ...form, exam_date: event.target.value })}
+                />
               </div>
+
               <div className="field">
                 <label>Required study minutes</label>
-                <input type="number" min="30" value={form.required_minutes} onChange={(event) => setForm({ ...form, required_minutes: event.target.value })} />
+                <input
+                  type="number"
+                  min="30"
+                  value={form.required_minutes}
+                  onChange={(event) => setForm({ ...form, required_minutes: event.target.value })}
+                />
               </div>
+
               <div className="field">
-                <label>Difficulty (1-5)</label>
-                <input type="number" min="1" max="5" value={form.difficulty} onChange={(event) => setForm({ ...form, difficulty: event.target.value })} />
+                <label>Difficulty</label>
+                <select
+                  value={form.difficulty}
+                  onChange={(event) => setForm({ ...form, difficulty: Number(event.target.value) })}
+                >
+                  {difficultyOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
               </div>
+
               <div className="field">
-                <label>Priority (1-5)</label>
-                <input type="number" min="1" max="5" value={form.priority} onChange={(event) => setForm({ ...form, priority: event.target.value })} />
+                <label>Priority</label>
+                <select
+                  value={form.priority}
+                  onChange={(event) => setForm({ ...form, priority: Number(event.target.value) })}
+                >
+                  {priorityOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
               </div>
+
               <div className="field">
                 <label>Color</label>
-                <input type="color" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} />
+                <input
+                  type="color"
+                  value={form.color}
+                  onChange={(event) => setForm({ ...form, color: event.target.value })}
+                />
               </div>
             </div>
+
             <div className="actions">
               <button className="btn btn-primary" type="submit">{editingId ? "Save changes" : "Add subject"}</button>
               {editingId ? <button className="btn btn-secondary" type="button" onClick={resetForm}>Cancel</button> : null}
@@ -151,7 +211,9 @@ export default function SubjectManagementPage() {
                   {subject.name}
                 </div>
                 <div className="block-meta">Exam: {subject.exam_date || "Not set"}</div>
-                <div className="block-meta">Difficulty {subject.difficulty} · Priority {subject.priority} · {subject.required_minutes} min</div>
+                <div className="block-meta">
+                  Difficulty {labelFor(difficultyOptions, subject.difficulty)} · Priority {labelFor(priorityOptions, subject.priority)} · {subject.required_minutes} min
+                </div>
               </div>
               <div className="actions">
                 <button className="btn btn-secondary" onClick={() => startEdit(subject)}>Edit</button>

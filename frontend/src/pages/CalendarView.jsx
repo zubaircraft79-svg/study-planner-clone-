@@ -7,18 +7,12 @@ function formatDate(date) {
   return date.toISOString().slice(0, 10);
 }
 
-function startOfWeek() {
-  const today = new Date();
-  const day = today.getDay();
-  const diff = today.getDate() - ((day + 6) % 7);
-  return new Date(today.getFullYear(), today.getMonth(), diff);
-}
-
 export default function CalendarViewPage() {
-  const [rangeStart, setRangeStart] = useState(formatDate(startOfWeek()));
+  const [rangeStart, setRangeStart] = useState(formatDate(new Date()));
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const rangeEnd = useMemo(() => {
     const start = new Date(rangeStart);
@@ -44,6 +38,18 @@ export default function CalendarViewPage() {
     loadBlocks();
   }, [rangeStart]);
 
+  async function handleComplete(blockId) {
+    try {
+      await api.completeBlock(blockId);
+      setMessage("Block completed and session logged.");
+      setError("");
+      await loadBlocks();
+    } catch (err) {
+      setError(err.message);
+      setMessage("");
+    }
+  }
+
   const grouped = useMemo(() => {
     const map = new Map();
     for (let i = 0; i < 7; i += 1) {
@@ -51,6 +57,7 @@ export default function CalendarViewPage() {
       current.setDate(current.getDate() + i);
       map.set(formatDate(current), []);
     }
+
     blocks.forEach((block) => {
       const key = block.block_date;
       if (!map.has(key)) {
@@ -58,6 +65,7 @@ export default function CalendarViewPage() {
       }
       map.get(key).push(block);
     });
+
     return map;
   }, [blocks, rangeStart]);
 
@@ -66,41 +74,50 @@ export default function CalendarViewPage() {
       <div className="page-header">
         <div>
           <h2>Calendar View</h2>
-          <p>Review the generated schedule in a weekly layout.</p>
+          <p>Review the generated schedule starting from today.</p>
         </div>
       </div>
 
       <SectionCard
-        title="Week selector"
-        subtitle="Move through the schedule week by week."
+        title="Schedule window"
+        subtitle="Move through the planner in 7-day ranges starting from the selected day."
         actions={
           <>
-            <button className="btn btn-secondary" onClick={() => {
-              const date = new Date(rangeStart);
-              date.setDate(date.getDate() - 7);
-              setRangeStart(formatDate(date));
-            }}>
-              Previous week
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                const date = new Date(rangeStart);
+                date.setDate(date.getDate() - 7);
+                setRangeStart(formatDate(date));
+              }}
+            >
+              Previous 7 days
             </button>
-            <button className="btn btn-secondary" onClick={() => setRangeStart(formatDate(startOfWeek()))}>
-              Current week
+
+            <button className="btn btn-secondary" onClick={() => setRangeStart(formatDate(new Date()))}>
+              Today
             </button>
-            <button className="btn btn-secondary" onClick={() => {
-              const date = new Date(rangeStart);
-              date.setDate(date.getDate() + 7);
-              setRangeStart(formatDate(date));
-            }}>
-              Next week
+
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                const date = new Date(rangeStart);
+                date.setDate(date.getDate() + 7);
+                setRangeStart(formatDate(date));
+              }}
+            >
+              Next 7 days
             </button>
           </>
         }
       >
         <div className="field" style={{ maxWidth: 240 }}>
-          <label>Week start</label>
+          <label>Start day</label>
           <input type="date" value={rangeStart} onChange={(event) => setRangeStart(event.target.value)} />
         </div>
       </SectionCard>
 
+      {message ? <div className="card">{message}</div> : null}
       {error ? <div className="warning">{error}</div> : null}
       {loading ? <div className="card">Loading calendar…</div> : null}
 
@@ -109,12 +126,28 @@ export default function CalendarViewPage() {
           <div key={day} className="day-column">
             <h4>{day}</h4>
             {items.length === 0 ? <p className="empty">No blocks scheduled.</p> : null}
+
             {items.map((block) => (
               <div key={block.id} className="block-card" style={{ background: `${block.subject_color}20` }}>
                 <strong>{block.subject_name}</strong>
-                <div className="block-meta">{new Date(block.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - {new Date(block.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+                <div className="block-meta">
+                  {new Date(block.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - {new Date(block.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div>
                 <div className="block-meta">{block.minutes} minutes · {block.block_type}</div>
                 <div className="block-meta">{block.reason}</div>
+                <div className="block-meta">Status: {block.status}</div>
+
+                <div className="actions" style={{ marginTop: 10 }}>
+                  {block.status === "planned" ? (
+                    <button className="btn btn-primary" onClick={() => handleComplete(block.id)}>
+                      Complete
+                    </button>
+                  ) : (
+                    <button className="btn btn-secondary" disabled>
+                      Completed
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
