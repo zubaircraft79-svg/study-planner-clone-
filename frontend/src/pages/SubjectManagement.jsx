@@ -25,7 +25,7 @@ const defaultForm = {
   difficulty: 3,
   priority: 3,
   required_minutes: 600,
-  color: "#4F46E5",
+  color: "#8b78ff",
 };
 
 function labelFor(options, value) {
@@ -38,6 +38,7 @@ export default function SubjectManagementPage() {
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [expandSubjects, setExpandSubjects] = useState(false);
 
   async function loadSubjects() {
     try {
@@ -114,19 +115,30 @@ export default function SubjectManagementPage() {
   }
 
   return (
-    <div className="grid cols-2">
-      <div className="grid">
+    <div className="surface-stack">
+      <section className="page-hero">
+        <div className="page-eyebrow">Subjects</div>
         <div className="page-header">
           <div>
-            <h2>Subject Management</h2>
-            <p>Add or update the courses that feed the planner algorithm.</p>
+            <h2>
+              Subject <span className="glow-text">setup and management</span>
+            </h2>
+            <p>
+              Add, edit, and organise the academic subjects that the planner uses to build study schedules and track progress.
+            </p>
           </div>
         </div>
+      </section>
 
-        {error ? <div className="warning">{error}</div> : null}
-        {message ? <div className="card">{message}</div> : null}
+      {error ? <div className="warning">{error}</div> : null}
+      {message ? <div className="card">{message}</div> : null}
 
-        <SectionCard title={editingId ? "Edit subject" : "Add subject"} subtitle="Keep inputs simple but useful for better schedules.">
+      <div className="grid cols-2">
+        <SectionCard
+          title={editingId ? "Edit subject" : "Add subject"}
+          subtitle="Enter the main details required for scheduling and progress tracking."
+          className="fixed-panel"
+        >
           <form className="grid" onSubmit={handleSubmit}>
             <div className="field">
               <label>Subject name</label>
@@ -193,36 +205,53 @@ export default function SubjectManagementPage() {
             </div>
 
             <div className="actions">
-              <button className="btn btn-primary" type="submit">{editingId ? "Save changes" : "Add subject"}</button>
-              {editingId ? <button className="btn btn-secondary" type="button" onClick={resetForm}>Cancel</button> : null}
+              <button className="btn btn-primary" type="submit">
+                {editingId ? "Save changes" : "Add subject"}
+              </button>
+              {editingId ? (
+                <button className="btn btn-secondary" type="button" onClick={resetForm}>
+                  Cancel
+                </button>
+              ) : null}
             </div>
           </form>
         </SectionCard>
-      </div>
 
-      <SectionCard title="Current subjects" subtitle="Use these subjects as the planner inputs.">
-        <div className="list">
-          {subjects.length === 0 ? <p className="empty">No subjects yet.</p> : null}
-          {subjects.map((subject) => (
-            <div key={subject.id} className="list-item">
-              <div>
-                <div className="badge">
-                  <span className="dot" style={{ background: subject.color }} />
-                  {subject.name}
+        <SectionCard title="Current subjects" subtitle="These records are used by the planner and progress system." className="fixed-panel">
+          <div className={`panel-scroll ${expandSubjects ? "is-expanded" : ""}`}>
+            <div className="list">
+              {subjects.length === 0 ? <p className="empty">No subjects yet.</p> : null}
+              {subjects.map((subject) => (
+                <div key={subject.id} className="list-item">
+                  <div>
+                    <div className="badge">
+                      <span className="dot" style={{ background: subject.color }} />
+                      {subject.name}
+                    </div>
+                    <div className="block-meta">Exam: {subject.exam_date || "Not set"}</div>
+                    <div className="block-meta">
+                      Difficulty {labelFor(difficultyOptions, subject.difficulty)} · Priority {labelFor(priorityOptions, subject.priority)} · {subject.required_minutes} min
+                    </div>
+                  </div>
+
+                  <div className="actions">
+                    <button className="btn btn-secondary" onClick={() => startEdit(subject)}>Edit</button>
+                    <button className="btn btn-danger" onClick={() => handleDelete(subject.id)}>Delete</button>
+                  </div>
                 </div>
-                <div className="block-meta">Exam: {subject.exam_date || "Not set"}</div>
-                <div className="block-meta">
-                  Difficulty {labelFor(difficultyOptions, subject.difficulty)} · Priority {labelFor(priorityOptions, subject.priority)} · {subject.required_minutes} min
-                </div>
-              </div>
-              <div className="actions">
-                <button className="btn btn-secondary" onClick={() => startEdit(subject)}>Edit</button>
-                <button className="btn btn-danger" onClick={() => handleDelete(subject.id)}>Delete</button>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </SectionCard>
+          </div>
+
+          {subjects.length > 0 ? (
+            <div className="panel-footer">
+              <button className="btn btn-secondary" type="button" onClick={() => setExpandSubjects((prev) => !prev)}>
+                {expandSubjects ? "Show less" : "Expand"}
+              </button>
+            </div>
+          ) : null}
+        </SectionCard>
+      </div>
     </div>
   );
 }

@@ -20,7 +20,13 @@ export default function StudyPlannerPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [range, setRange] = useState({ start_date: todayPlus(0), end_date: todayPlus(14) });
-  const [overrideForm, setOverrideForm] = useState({ override_date: todayPlus(1), minutes_available: 120, is_rest_day: false });
+  const [overrideForm, setOverrideForm] = useState({
+    override_date: todayPlus(1),
+    minutes_available: 120,
+    is_rest_day: false,
+  });
+  const [expandPreview, setExpandPreview] = useState(false);
+  const [expandSaved, setExpandSaved] = useState(false);
 
   async function loadBaseData() {
     try {
@@ -158,7 +164,6 @@ export default function StudyPlannerPage() {
     if (!preview?.blocks) {
       return [];
     }
-
     const grouped = new Map();
     preview.blocks.forEach((block) => {
       if (!grouped.has(block.block_date)) {
@@ -166,64 +171,100 @@ export default function StudyPlannerPage() {
       }
       grouped.get(block.block_date).push(block);
     });
-
     return [...grouped.entries()];
   }, [preview]);
 
   return (
-    <div className="grid">
-      <div className="page-header">
-        <div>
-          <h2>Study Planner</h2>
-          <p>Configure schedule preferences, availability, and generate balanced study plans.</p>
+    <div className="surface-stack">
+      <section className="page-hero">
+        <div className="page-eyebrow">Planner</div>
+        <div className="page-header">
+          <div>
+            <h2>
+              Study plan <span className="glow-text">configuration and scheduling</span>
+            </h2>
+            <p>
+              Define availability, adjust session preferences, preview the generated schedule, and save a plan for the selected period.
+            </p>
+          </div>
+
+          <div className="page-actions">
+            <button className="btn btn-secondary" onClick={handlePreview}>Preview plan</button>
+            <button className="btn btn-primary" onClick={handleGenerateAndSave}>Generate & save</button>
+          </div>
         </div>
-      </div>
+      </section>
 
       {error ? <div className="warning">{error}</div> : null}
       {message ? <div className="card">{message}</div> : null}
 
       <div className="grid cols-2">
-        <SectionCard title="Planning range" subtitle="Choose the period the planner should fill.">
+        <SectionCard title="Planning range" subtitle="Choose the dates the algorithm should fill." className="fixed-panel fixed-panel-sm">
           <div className="form-grid">
             <div className="field">
               <label>Start date</label>
-              <input type="date" value={range.start_date} onChange={(event) => setRange({ ...range, start_date: event.target.value })} />
+              <input
+                type="date"
+                value={range.start_date}
+                onChange={(event) => setRange({ ...range, start_date: event.target.value })}
+              />
             </div>
             <div className="field">
               <label>End date</label>
-              <input type="date" value={range.end_date} onChange={(event) => setRange({ ...range, end_date: event.target.value })} />
+              <input
+                type="date"
+                value={range.end_date}
+                onChange={(event) => setRange({ ...range, end_date: event.target.value })}
+              />
             </div>
-          </div>
-
-          <div className="actions" style={{ marginTop: 16 }}>
-            <button className="btn btn-secondary" onClick={handlePreview}>Preview plan</button>
-            <button className="btn btn-primary" onClick={handleGenerateAndSave}>Generate & save</button>
           </div>
         </SectionCard>
 
-        <SectionCard title="Schedule preferences" subtitle="Control session size and break behavior.">
+        <SectionCard title="Schedule preferences" subtitle="Control session length, break structure, and start time." className="fixed-panel fixed-panel-sm">
           {preferences ? (
             <form className="grid" onSubmit={handleSavePreferences}>
               <div className="form-grid">
                 <div className="field">
                   <label>Session minutes</label>
-                  <input type="number" value={preferences.session_minutes} onChange={(event) => setPreferences({ ...preferences, session_minutes: event.target.value })} />
+                  <input
+                    type="number"
+                    value={preferences.session_minutes}
+                    onChange={(event) => setPreferences({ ...preferences, session_minutes: event.target.value })}
+                  />
                 </div>
                 <div className="field">
                   <label>Short break minutes</label>
-                  <input type="number" value={preferences.short_break_minutes} onChange={(event) => setPreferences({ ...preferences, short_break_minutes: event.target.value })} />
+                  <input
+                    type="number"
+                    value={preferences.short_break_minutes}
+                    onChange={(event) => setPreferences({ ...preferences, short_break_minutes: event.target.value })}
+                  />
                 </div>
                 <div className="field">
                   <label>Long break minutes</label>
-                  <input type="number" value={preferences.long_break_minutes} onChange={(event) => setPreferences({ ...preferences, long_break_minutes: event.target.value })} />
+                  <input
+                    type="number"
+                    value={preferences.long_break_minutes}
+                    onChange={(event) => setPreferences({ ...preferences, long_break_minutes: event.target.value })}
+                  />
                 </div>
                 <div className="field">
                   <label>Long break every N sessions</label>
-                  <input type="number" value={preferences.long_break_every} onChange={(event) => setPreferences({ ...preferences, long_break_every: event.target.value })} />
+                  <input
+                    type="number"
+                    value={preferences.long_break_every}
+                    onChange={(event) => setPreferences({ ...preferences, long_break_every: event.target.value })}
+                  />
                 </div>
                 <div className="field">
                   <label>Day start hour</label>
-                  <input type="number" min="0" max="23" value={preferences.day_start_hour} onChange={(event) => setPreferences({ ...preferences, day_start_hour: event.target.value })} />
+                  <input
+                    type="number"
+                    min="0"
+                    max="23"
+                    value={preferences.day_start_hour}
+                    onChange={(event) => setPreferences({ ...preferences, day_start_hour: event.target.value })}
+                  />
                 </div>
               </div>
 
@@ -231,12 +272,14 @@ export default function StudyPlannerPage() {
                 <button className="btn btn-primary" type="submit">Save preferences</button>
               </div>
             </form>
-          ) : <p className="empty">Loading preferences…</p>}
+          ) : (
+            <p className="empty">Loading preferences…</p>
+          )}
         </SectionCard>
       </div>
 
       <div className="grid cols-2">
-        <SectionCard title="Weekly availability" subtitle="Set how many minutes are available on each weekday.">
+        <SectionCard title="Weekly availability" subtitle="Set default study capacity for each weekday.">
           <div className="table-wrap">
             <table className="table">
               <thead>
@@ -258,7 +301,9 @@ export default function StudyPlannerPage() {
                         disabled={row.is_rest_day}
                         onChange={(event) => {
                           const next = templates.map((item) =>
-                            item.weekday === row.weekday ? { ...item, minutes_available: event.target.value } : item
+                            item.weekday === row.weekday
+                              ? { ...item, minutes_available: event.target.value }
+                              : item
                           );
                           setTemplates(next);
                         }}
@@ -272,7 +317,11 @@ export default function StudyPlannerPage() {
                           const checked = event.target.checked;
                           const next = templates.map((item) =>
                             item.weekday === row.weekday
-                              ? { ...item, is_rest_day: checked, minutes_available: checked ? 0 : item.minutes_available || 120 }
+                              ? {
+                                  ...item,
+                                  is_rest_day: checked,
+                                  minutes_available: checked ? 0 : item.minutes_available || 120,
+                                }
                               : item
                           );
                           setTemplates(next);
@@ -290,12 +339,16 @@ export default function StudyPlannerPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Date-specific overrides" subtitle="Adjust individual days for extra work or rest.">
+        <SectionCard title="Date-specific overrides" subtitle="Modify individual dates for exceptions to the weekly pattern.">
           <form className="grid" onSubmit={handleSaveOverride}>
             <div className="form-grid">
               <div className="field">
                 <label>Date</label>
-                <input type="date" value={overrideForm.override_date} onChange={(event) => setOverrideForm({ ...overrideForm, override_date: event.target.value })} />
+                <input
+                  type="date"
+                  value={overrideForm.override_date}
+                  onChange={(event) => setOverrideForm({ ...overrideForm, override_date: event.target.value })}
+                />
               </div>
 
               <div className="field">
@@ -311,7 +364,10 @@ export default function StudyPlannerPage() {
 
               <div className="field">
                 <label>Rest day</label>
-                <select value={String(overrideForm.is_rest_day)} onChange={(event) => setOverrideForm({ ...overrideForm, is_rest_day: event.target.value === "true" })}>
+                <select
+                  value={String(overrideForm.is_rest_day)}
+                  onChange={(event) => setOverrideForm({ ...overrideForm, is_rest_day: event.target.value === "true" })}
+                >
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </select>
@@ -323,88 +379,122 @@ export default function StudyPlannerPage() {
             </div>
           </form>
 
-          <div className="list" style={{ marginTop: 16 }}>
-            {overrides.length === 0 ? <p className="empty">No overrides in this range.</p> : null}
-            {overrides.map((item) => (
-              <div key={item.id} className="list-item">
-                <div>
-                  <strong>{item.override_date}</strong>
-                  <div className="block-meta">{item.is_rest_day ? "Rest day" : `${item.minutes_available} minutes available`}</div>
+          <div className="panel-scroll" style={{ marginTop: 18 }}>
+            <div className="list">
+              {overrides.length === 0 ? <p className="empty">No overrides in this range.</p> : null}
+              {overrides.map((item) => (
+                <div key={item.id} className="list-item">
+                  <div>
+                    <strong>{item.override_date}</strong>
+                    <div className="block-meta">
+                      {item.is_rest_day ? "Rest day" : `${item.minutes_available} minutes available`}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </SectionCard>
       </div>
 
       <div className="grid cols-2">
-        <SectionCard title="Planner preview" subtitle="See generated blocks before saving them.">
+        <SectionCard
+          title="Planner preview"
+          subtitle="Review the generated schedule before saving it."
+          className="fixed-panel"
+        >
           {!preview ? <p className="empty">No preview yet.</p> : null}
 
           {preview?.warnings?.length ? (
             <div className="grid">
               {preview.warnings.map((warning, index) => (
-                <div key={`${warning.code}-${index}`} className="warning">{warning.message}</div>
+                <div key={`${warning.code}-${index}`} className="warning">
+                  {warning.message}
+                </div>
               ))}
             </div>
           ) : null}
 
-          <div className="list">
-            {groupedPreview.map(([day, items]) => (
-              <div key={day} className="card" style={{ padding: 16 }}>
-                <h4>{day}</h4>
-                {items.map((block) => (
-                  <div key={`${day}-${block.order_index}-${block.subject_id}`} className="list-item">
-                    <div>
-                      <div className="badge">
-                        <span className="dot" style={{ background: block.subject_color }} />
-                        {block.subject_name}
+          <div className={`panel-scroll ${expandPreview ? "is-expanded" : ""}`}>
+            <div className="list">
+              {groupedPreview.map(([day, items]) => (
+                <div key={day} className="card card-subtle">
+                  <h4>{day}</h4>
+                  {items.map((block) => (
+                    <div key={`${day}-${block.order_index}-${block.subject_id}`} className="list-item">
+                      <div>
+                        <div className="badge">
+                          <span className="dot" style={{ background: block.subject_color }} />
+                          {block.subject_name}
+                        </div>
+                        <div className="block-meta">{block.minutes} minutes · {block.block_type}</div>
+                        <div className="block-meta">{block.reason}</div>
                       </div>
-                      <div className="block-meta">{block.minutes} minutes · {block.block_type}</div>
-                      <div className="block-meta">{block.reason}</div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ))}
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
+
+          {groupedPreview.length > 0 ? (
+            <div className="panel-footer">
+              <button className="btn btn-secondary" type="button" onClick={() => setExpandPreview((prev) => !prev)}>
+                {expandPreview ? "Show less" : "Expand"}
+              </button>
+            </div>
+          ) : null}
         </SectionCard>
 
-        <SectionCard title="Saved blocks" subtitle="Lock important blocks, or complete them after studying.">
-          <div className="list">
-            {savedBlocks.length === 0 ? <p className="empty">No saved plan blocks in this range.</p> : null}
-            {savedBlocks.map((block) => (
-              <div key={block.id} className="list-item">
-                <div>
-                  <div className="badge">
-                    <span className="dot" style={{ background: block.subject_color }} />
-                    {block.subject_name}
+        <SectionCard
+          title="Saved blocks"
+          subtitle="Manage preserved sessions and complete blocks after study is done."
+          className="fixed-panel"
+        >
+          <div className={`panel-scroll ${expandSaved ? "is-expanded" : ""}`}>
+            <div className="list">
+              {savedBlocks.length === 0 ? <p className="empty">No saved plan blocks in this range.</p> : null}
+              {savedBlocks.map((block) => (
+                <div key={block.id} className="list-item">
+                  <div>
+                    <div className="badge">
+                      <span className="dot" style={{ background: block.subject_color }} />
+                      {block.subject_name}
+                    </div>
+                    <div className="block-meta">
+                      {block.block_date} · {new Date(block.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - {new Date(block.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                    <div className="block-meta">{block.minutes} minutes · {block.block_type}</div>
+                    <div className="block-meta">Status: {block.status}</div>
                   </div>
-                  <div className="block-meta">
-                    {block.block_date} · {new Date(block.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - {new Date(block.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+
+                  <div className="actions">
+                    <button className="btn btn-secondary" onClick={() => toggleLock(block)}>
+                      {block.locked ? "Unlock" : "Lock"}
+                    </button>
+
+                    {block.status === "planned" ? (
+                      <button className="btn btn-primary" onClick={() => handleComplete(block)}>
+                        Complete
+                      </button>
+                    ) : (
+                      <button className="btn btn-secondary" disabled>
+                        Completed
+                      </button>
+                    )}
                   </div>
-                  <div className="block-meta">{block.minutes} minutes · {block.block_type}</div>
-                  <div className="block-meta">Status: {block.status}</div>
                 </div>
-
-                <div className="actions">
-                  <button className="btn btn-secondary" onClick={() => toggleLock(block)}>
-                    {block.locked ? "Unlock" : "Lock"}
-                  </button>
-
-                  {block.status === "planned" ? (
-                    <button className="btn btn-primary" onClick={() => handleComplete(block)}>
-                      Complete
-                    </button>
-                  ) : (
-                    <button className="btn btn-secondary" disabled>
-                      Completed
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+
+          {savedBlocks.length > 0 ? (
+            <div className="panel-footer">
+              <button className="btn btn-secondary" type="button" onClick={() => setExpandSaved((prev) => !prev)}>
+                {expandSaved ? "Show less" : "Expand"}
+              </button>
+            </div>
+          ) : null}
         </SectionCard>
       </div>
     </div>

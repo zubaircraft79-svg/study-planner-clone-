@@ -70,17 +70,24 @@ export default function CalendarViewPage() {
   }, [blocks, rangeStart]);
 
   return (
-    <div className="grid">
-      <div className="page-header">
-        <div>
-          <h2>Calendar View</h2>
-          <p>Review the generated schedule starting from today.</p>
+    <div className="surface-stack">
+      <section className="page-hero">
+        <div className="page-eyebrow">Calendar</div>
+        <div className="page-header">
+          <div>
+            <h2>
+              Calendar <span className="glow-text">schedule view</span>
+            </h2>
+            <p>
+              Review saved study blocks in a seven-day timeline, monitor status, and complete sessions directly from the calendar.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
       <SectionCard
         title="Schedule window"
-        subtitle="Move through the planner in 7-day ranges starting from the selected day."
+        subtitle="Move through the saved plan in seven-day ranges."
         actions={
           <>
             <button
@@ -125,31 +132,34 @@ export default function CalendarViewPage() {
         {[...grouped.entries()].map(([day, items]) => (
           <div key={day} className="day-column">
             <h4>{day}</h4>
-            {items.length === 0 ? <p className="empty">No blocks scheduled.</p> : null}
 
-            {items.map((block) => (
-              <div key={block.id} className="block-card" style={{ background: `${block.subject_color}20` }}>
-                <strong>{block.subject_name}</strong>
-                <div className="block-meta">
-                  {new Date(block.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - {new Date(block.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </div>
-                <div className="block-meta">{block.minutes} minutes · {block.block_type}</div>
-                <div className="block-meta">{block.reason}</div>
-                <div className="block-meta">Status: {block.status}</div>
+            <div className="day-column-scroll">
+              {items.length === 0 ? <p className="empty">No blocks scheduled.</p> : null}
 
-                <div className="actions" style={{ marginTop: 10 }}>
-                  {block.status === "planned" ? (
-                    <button className="btn btn-primary" onClick={() => handleComplete(block.id)}>
-                      Complete
-                    </button>
-                  ) : (
-                    <button className="btn btn-secondary" disabled>
-                      Completed
-                    </button>
-                  )}
+              {items.map((block) => (
+                <div key={block.id} className="block-card" style={{ background: `${block.subject_color}22` }}>
+                  <strong>{block.subject_name}</strong>
+                  <div className="block-meta">
+                    {new Date(block.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - {new Date(block.ends_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </div>
+                  <div className="block-meta">{block.minutes} minutes · {block.block_type}</div>
+                  <div className="block-meta">{block.reason}</div>
+                  <div className="block-meta">Status: {block.status}</div>
+
+                  <div className="actions" style={{ marginTop: 12 }}>
+                    {block.status === "planned" ? (
+                      <button className="btn btn-primary" onClick={() => handleComplete(block.id)}>
+                        Complete
+                      </button>
+                    ) : (
+                      <button className="btn btn-secondary" disabled>
+                        Completed
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ))}
       </div>

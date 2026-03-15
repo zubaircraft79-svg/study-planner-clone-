@@ -28,49 +28,84 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="grid">
-      <div className="page-header">
-        <div>
-          <h2>Dashboard</h2>
-          <p>Overview of workload, exams, and study progress.</p>
+    <div className="surface-stack">
+      <section className="page-hero">
+        <div className="page-eyebrow">Overview</div>
+        <div className="page-header">
+          <div>
+            <h2>
+              Study activity and <span className="glow-text">planning overview</span>
+            </h2>
+            <p>
+              Review your current workload, upcoming exams, saved schedule, and completed study time across all subjects.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
       {error ? <div className="warning">{error}</div> : null}
       {loading ? <div className="card">Loading dashboard…</div> : null}
 
       {summary ? (
-        <div className="grid cols-3">
-          <StatCard label="Subjects" value={summary.total_subjects} hint="Active courses tracked in the planner" />
-          <StatCard label="Planned minutes" value={summary.total_planned_minutes} hint="Scheduled in the visible planning horizon" />
-          <StatCard label="Completed minutes" value={summary.total_completed_minutes} hint="Logged through progress tracking" />
-          <StatCard label="Upcoming exams" value={summary.upcoming_exams} hint="Subjects with future exam dates" />
-          <StatCard label="Completion rate" value={`${summary.completion_rate}%`} hint="Completed versus required workload" />
-          <StatCard
-            label="Next exam"
-            value={summary.next_exam_subject || "—"}
-            hint={summary.next_exam_date ? `Scheduled on ${summary.next_exam_date}` : "No exam date set"}
-          />
+        <div className="kpi-grid">
+          <StatCard index={0} label="Subjects" value={summary.total_subjects} hint="Active courses in your planner" />
+          <StatCard index={1} label="Planned minutes" value={summary.total_planned_minutes} hint="Scheduled inside the current horizon" />
+          <StatCard index={2} label="Completed minutes" value={summary.total_completed_minutes} hint="Logged through real study activity" />
+          <StatCard index={3} label="Completion rate" value={`${summary.completion_rate}%`} hint="Completed versus required workload" />
         </div>
       ) : null}
 
-      <SectionCard title="Progress snapshot" subtitle="Quick look at the remaining work for each subject.">
-        <div className="list">
-          {progress.length === 0 ? <p className="empty">No subjects added yet.</p> : null}
-          {progress.slice(0, 5).map((item) => (
-            <div key={item.subject_id} className="list-item">
-              <div>
-                <div className="badge">
-                  <span className="dot" style={{ background: item.color }} />
-                  {item.subject_name}
+      <div className="grid cols-2">
+        <SectionCard title="Exam focus" subtitle="Keep the nearest deadlines visible and easy to monitor.">
+          {summary ? (
+            <div className="list">
+              <div className="list-item">
+                <div>
+                  <strong>{summary.next_exam_subject || "No exam added yet"}</strong>
+                  <div className="block-meta">
+                    {summary.next_exam_date ? `Nearest exam scheduled on ${summary.next_exam_date}` : "Add exam dates to activate deadline-based planning."}
+                  </div>
                 </div>
-                <div className="block-meta">{item.completed_minutes} / {item.required_minutes} minutes completed</div>
+                <div className="badge">Upcoming exams: {summary.upcoming_exams}</div>
               </div>
-              <strong>{item.progress_percent}%</strong>
+
+              <div className="list-item">
+                <div>
+                  <strong>Saved schedule</strong>
+                  <div className="block-meta">
+                    {summary.total_planned_minutes > 0
+                      ? "A study plan is already saved in the current planning range."
+                      : "No saved plan yet. Generate one from the Study Planner page."}
+                  </div>
+                </div>
+                <div className="badge">{summary.total_planned_minutes} min</div>
+              </div>
             </div>
-          ))}
-        </div>
-      </SectionCard>
+          ) : (
+            <p className="empty">No summary available yet.</p>
+          )}
+        </SectionCard>
+
+        <SectionCard title="Progress snapshot" subtitle="A quick view of progress across your active subjects.">
+          <div className="list">
+            {progress.length === 0 ? <p className="empty">No subjects added yet.</p> : null}
+            {progress.slice(0, 5).map((item) => (
+              <div key={item.subject_id} className="list-item">
+                <div>
+                  <div className="badge">
+                    <span className="dot" style={{ background: item.color }} />
+                    {item.subject_name}
+                  </div>
+                  <div className="block-meta">
+                    {item.completed_minutes} / {item.required_minutes} minutes completed
+                  </div>
+                </div>
+                <strong>{item.progress_percent}%</strong>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      </div>
     </div>
   );
 }

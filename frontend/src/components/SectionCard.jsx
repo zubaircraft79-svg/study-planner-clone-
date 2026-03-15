@@ -1,14 +1,16 @@
-export default function SectionCard({ title, subtitle, children, actions }) {
+export default function SectionCard({ title, subtitle, children, actions, className = "" }) {
   return (
-    <section className="card">
-      <div className="page-header" style={{ marginBottom: 16 }}>
+    <section className={`card ${className}`.trim()}>
+      <div className="section-head">
         <div>
           <h3>{title}</h3>
           {subtitle ? <p>{subtitle}</p> : null}
         </div>
         {actions ? <div className="actions">{actions}</div> : null}
       </div>
-      {children}
+      <div className="section-content">
+        {children}
+      </div>
     </section>
   );
 }
